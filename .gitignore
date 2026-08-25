@@ -1,0 +1,88 @@
+# ==========================================
+#         KoreLife Monorepo .gitignore
+# ==========================================
+
+# 1. Dependencias de Node.js (Causa #1 de peso excesivo en GitHub)
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 2. Builds y Distribuciones compiladas
+dist/
+**/dist/
+build/
+**/build/
+out/
+**/out/
+web-build/
+**/web-build/
+.next/
+**/.next/
+
+# 3. Expo & Metro Bundler Caches
+.expo/
+**/.expo/
+.expo-shared/
+**/.expo-shared/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# 4. Binarios móviles pesados (.apk, .aab, .ipa)
+*.apk
+*.aab
+*.ipa
+*.app
+*.dSYM/
+*.dSYM.zip
+
+# 5. Caches de compilación nativa (iOS / Android / Gradle)
+.gradle/
+**/.gradle/
+local.properties
+Pods/
+**/Pods/
+DerivedData/
+build/
+*.hbc
+*.hbc.map
+
+# 6. Source Maps grandes (Pueden pesar 10MB+ cada uno)
+*.map
+**/*.map
+
+# 7. Variables de entorno y credenciales secretas
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+**/.env
+**/.env.local
+**/.env.*.local
+*.pem
+
+# 8. Vercel & Hosting CLI Caches
+.vercel/
+**/.vercel/
+
+# 9. Logs y temporizadores
+logs/
+*.log
+*.tmp
+*.temp
+
+# 10. Archivos de sistema operativo y editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo

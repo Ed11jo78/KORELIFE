@@ -1,0 +1,89 @@
+# ============================================================
+# KoreLife — Docker Compose (PostgreSQL + Redis + pgAdmin)
+# ============================================================
+version: '3.9'
+
+services:
+  # ─────────────────────────────────────────
+  # PostgreSQL — Base de datos principal
+  # ─────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: korelife_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: korelife
+      POSTGRES_USER: korelife_user
+      POSTGRES_PASSWORD: KoreLife2026!Secure
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./korelife-db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - korelife_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U korelife_user -d korelife"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────
+  # Redis — Caché y sesiones
+  # ─────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: korelife_redis
+    restart: unless-stopped
+    command: redis-server --requirepass KoreLifeRedis2026! --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - korelife_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "KoreLifeRedis2026!", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────
+  # pgAdmin — Interfaz web para PostgreSQL
+  # ─────────────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: korelife_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@korelife.app
+      PGADMIN_DEFAULT_PASSWORD: KoreLife2026!
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    networks:
+      - korelife_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+# ─────────────────────────────────────────
+# Volúmenes persistentes
+# ─────────────────────────────────────────
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+# ─────────────────────────────────────────
+# Red interna
+# ─────────────────────────────────────────
+networks:
+  korelife_network:
+    driver: bridge
