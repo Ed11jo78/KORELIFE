@@ -1,0 +1,121 @@
+{
+  "entities": {
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Financial transaction record",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "accountId": { "type": "string" },
+        "amount": { "type": "number" },
+        "currency": { "type": "string" },
+        "type": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "accountId", "amount", "currency", "type", "category", "date"]
+    },
+    "Account": {
+      "title": "Account",
+      "description": "User bank, cash or crypto account",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "balance": { "type": "number" },
+        "currency": { "type": "string" }
+      },
+      "required": ["userId", "name", "type", "balance", "currency"]
+    },
+    "Budget": {
+      "title": "Budget",
+      "description": "Monthly spending budget category",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "category": { "type": "string" },
+        "amount": { "type": "number" },
+        "spent": { "type": "number" },
+        "currency": { "type": "string" },
+        "period": { "type": "string" }
+      },
+      "required": ["userId", "category", "amount", "spent", "currency"]
+    },
+    "KoreTask": {
+      "title": "KoreTask",
+      "description": "Productivity task item",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "priority": { "type": "string" },
+        "dueDate": { "type": "string" },
+        "status": { "type": "string" },
+        "category": { "type": "string" }
+      },
+      "required": ["userId", "title", "completed", "priority", "status"]
+    },
+    "Habit": {
+      "title": "Habit",
+      "description": "Daily habit tracker item",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "streak": { "type": "integer" },
+        "completedToday": { "type": "boolean" },
+        "frequency": { "type": "string" },
+        "emoji": { "type": "string" },
+        "category": { "type": "string" },
+        "bestStreak": { "type": "integer" }
+      },
+      "required": ["userId", "name", "streak", "completedToday"]
+    },
+    "Goal": {
+      "title": "Goal",
+      "description": "Savings goal target",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "emoji": { "type": "string" },
+        "targetAmount": { "type": "number" },
+        "currentAmount": { "type": "number" },
+        "currency": { "type": "string" },
+        "deadline": { "type": "string" }
+      },
+      "required": ["userId", "title", "targetAmount", "currentAmount", "currency", "deadline"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/transactions/{transactionId}": {
+      "schema": { "$ref": "#/entities/Transaction" },
+      "description": "User transactions collection"
+    },
+    "/users/{userId}/accounts/{accountId}": {
+      "schema": { "$ref": "#/entities/Account" },
+      "description": "User accounts collection"
+    },
+    "/users/{userId}/budgets/{budgetId}": {
+      "schema": { "$ref": "#/entities/Budget" },
+      "description": "User budgets collection"
+    },
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/KoreTask" },
+      "description": "User tasks collection"
+    },
+    "/users/{userId}/habits/{habitId}": {
+      "schema": { "$ref": "#/entities/Habit" },
+      "description": "User habits collection"
+    },
+    "/users/{userId}/goals/{goalId}": {
+      "schema": { "$ref": "#/entities/Goal" },
+      "description": "User goals collection"
+    }
+  }
+}

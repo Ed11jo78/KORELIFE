@@ -931,6 +931,7 @@ private fun BudgetsTab(
     onAddBudget: () -> Unit,
     onGoToRecurring: () -> Unit = {}
 ) {
+    val budgetAlerts by viewModel.budgetAlerts.collectAsState()
     var budgetToEdit by remember { mutableStateOf<Budget?>(null) }
     var budgetForQuickExpense by remember { mutableStateOf<Budget?>(null) }
     var budgetToDelete by remember { mutableStateOf<Budget?>(null) }
@@ -1008,6 +1009,84 @@ private fun BudgetsTab(
         verticalArrangement = Arrangement.spacedBy(14.dp),
         contentPadding = PaddingValues(top = 4.dp, bottom = 100.dp)
     ) {
+        if (budgetAlerts.isNotEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("smart_budget_alerts_card"),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
+                    border = CardDefaults.outlinedCardBorder().copy(
+                        brush = androidx.compose.ui.graphics.SolidColor(
+                            if (budgetAlerts.any { it.severity == BudgetAlertSeverity.CRITICAL }) RedError.copy(alpha = 0.6f) else AmberTertiary.copy(alpha = 0.5f)
+                        )
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(text = "🔔", fontSize = 20.sp)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Sistema de Alertas Inteligentes",
+                                    color = TextWhite,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (budgetAlerts.any { it.severity == BudgetAlertSeverity.CRITICAL }) RedError.copy(alpha = 0.2f) else AmberTertiary.copy(alpha = 0.2f))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "${budgetAlerts.size} avisos",
+                                    color = if (budgetAlerts.any { it.severity == BudgetAlertSeverity.CRITICAL }) RedError else AmberTertiary,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        budgetAlerts.forEach { alert ->
+                            val isCritical = alert.severity == BudgetAlertSeverity.CRITICAL
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(if (isCritical) RedError.copy(alpha = 0.15f) else AmberTertiary.copy(alpha = 0.15f))
+                                    .padding(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = if (isCritical) "🚨" else "⚠️",
+                                    fontSize = 18.sp
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = alert.message,
+                                        color = TextWhite,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // 1. Resumen Global de Presupuesto Mensual
         item {
             Card(

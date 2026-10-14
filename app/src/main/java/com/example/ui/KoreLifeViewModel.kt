@@ -6,18 +6,31 @@ import com.example.data.model.*
 import com.example.data.repository.KoreLifeRepository
 import com.example.data.supabase.SupabaseClient
 import com.example.data.supabase.SupabaseUser
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class KoreLifeViewModel : ViewModel() {
 
     val repository = KoreLifeRepository(viewModelScope)
-    val supabaseClient = SupabaseClient()
 
-    val currentUser: StateFlow<SupabaseUser?> = supabaseClient.currentUser
-    val isAuthLoading: StateFlow<Boolean> = supabaseClient.isLoading
+    private val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+    private val _currentUser = kotlinx.coroutines.flow.MutableStateFlow(auth.currentUser)
+    val currentUser: StateFlow<com.google.firebase.auth.FirebaseUser?> = _currentUser.asStateFlow()
+
+    private val _isAuthLoading = kotlinx.coroutines.flow.MutableStateFlow(false)
+    val isAuthLoading: StateFlow<Boolean> = _isAuthLoading.asStateFlow()
+
+    init {
+        auth.addAuthStateListener { firebaseAuth ->
+            _currentUser.value = firebaseAuth.currentUser
+        }
+    }
 
     val rates = repository.rates.stateIn(viewModelScope, SharingStarted.Lazily, repository.rates.value)
     val selectedProvider = repository.selectedProvider.stateIn(viewModelScope, SharingStarted.Lazily, repository.selectedProvider.value)
@@ -26,6 +39,35 @@ class KoreLifeViewModel : ViewModel() {
     val accounts = repository.accounts.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     val transactions = repository.transactions.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     val budgets = repository.budgets.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    val budgetAlerts: StateFlow<List<BudgetAlert>> = budgets.map { budgetList ->
+        budgetList.mapNotNull { b ->
+            if (b.amount > 0) {
+                val ratio = b.spent / b.amount
+                val pct = (ratio * 100).toInt()
+                when {
+                    ratio >= 0.90 -> BudgetAlert(
+                        budgetId = b.id,
+                        category = b.category,
+                        spent = b.spent,
+                        amount = b.amount,
+                        percentage = pct,
+                        severity = BudgetAlertSeverity.CRITICAL,
+                        message = "🚨 ¡Alerta de Presupuesto Crítico! Has gastado el $pct% del presupuesto de '${b.category}' (${b.spent} / ${b.amount} ${b.currency.symbol})."
+                    )
+                    ratio >= 0.80 -> BudgetAlert(
+                        budgetId = b.id,
+                        category = b.category,
+                        spent = b.spent,
+                        amount = b.amount,
+                        percentage = pct,
+                        severity = BudgetAlertSeverity.WARNING,
+                        message = "⚠️ ¡Aviso Preventivo! El gasto en '${b.category}' ha alcanzado el $pct% de tu límite mensual."
+                    )
+                    else -> null
+                }
+            } else null
+        }
+    }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     val goals = repository.goals.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     val subscriptions = repository.subscriptions.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     val recurringExpenses = repository.recurringExpenses.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
@@ -44,43 +86,61 @@ class KoreLifeViewModel : ViewModel() {
     val biometricsEnabled = repository.biometricsEnabled.stateIn(viewModelScope, SharingStarted.Lazily, true)
     val themeMode = repository.themeMode.stateIn(viewModelScope, SharingStarted.Lazily, repository.themeMode.value)
 
-    // --- Authentication Actions with Supabase ---
+    // --- Authentication Actions with Firebase ---
     fun signIn(email: String, pass: String, onResult: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
-            val res = supabaseClient.signInWithPassword(email, pass)
-            res.fold(
-                onSuccess = { onResult(true, null) },
-                onFailure = { onResult(false, it.message ?: "Error al iniciar sesión") }
-            )
+            _isAuthLoading.value = true
+            try {
+                auth.signInWithEmailAndPassword(email, pass).await()
+                onResult(true, null)
+            } catch (e: Exception) {
+                onResult(false, e.localizedMessage ?: "Error al iniciar sesión")
+            } finally {
+                _isAuthLoading.value = false
+            }
         }
     }
 
     fun signUp(email: String, pass: String, fullName: String, onResult: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
-            val res = supabaseClient.signUp(email, pass, fullName)
-            res.fold(
-                onSuccess = { onResult(true, null) },
-                onFailure = { onResult(false, it.message ?: "Error al registrar cuenta") }
-            )
+            _isAuthLoading.value = true
+            try {
+                auth.createUserWithEmailAndPassword(email, pass).await()
+                onResult(true, null)
+            } catch (e: Exception) {
+                onResult(false, e.localizedMessage ?: "Error al registrar cuenta")
+            } finally {
+                _isAuthLoading.value = false
+            }
         }
     }
 
     fun recoverPassword(email: String, onResult: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
-            val res = supabaseClient.recoverPassword(email)
-            res.fold(
-                onSuccess = { onResult(true, null) },
-                onFailure = { onResult(false, it.message ?: "No se pudo enviar el correo de recuperación") }
-            )
+            _isAuthLoading.value = true
+            try {
+                auth.sendPasswordResetEmail(email).await()
+                onResult(true, null)
+            } catch (e: Exception) {
+                onResult(false, e.localizedMessage ?: "No se pudo enviar el correo de recuperación")
+            } finally {
+                _isAuthLoading.value = false
+            }
         }
     }
 
     fun continueAsGuest() {
-        supabaseClient.continueAsGuest()
+        viewModelScope.launch {
+            try {
+                auth.signInAnonymously().await()
+            } catch (e: Exception) {
+                // ignore
+            }
+        }
     }
 
     fun signOut() {
-        supabaseClient.signOut()
+        auth.signOut()
     }
 
     // --- Rates Functions ---
@@ -182,6 +242,7 @@ class KoreLifeViewModel : ViewModel() {
     fun deleteHabit(habitId: String) = repository.deleteHabit(habitId)
     fun resetHabitStreak(habitId: String) = repository.resetHabitStreak(habitId)
     fun toggleHabit(habitId: String) = repository.toggleHabit(habitId)
+    fun toggleHabitDay(habitId: String, day: Int) = repository.toggleHabitDay(habitId, day)
 
     fun addNote(title: String, content: String) = repository.addNote(title, content)
     fun deleteNote(noteId: String) = repository.deleteNote(noteId)

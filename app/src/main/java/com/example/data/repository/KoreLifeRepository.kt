@@ -833,12 +833,27 @@ class KoreLifeRepository(private val coroutineScope: CoroutineScope) {
                 if (idx in updatedWeekly.indices) {
                     updatedWeekly[idx] = newCompleted
                 }
+                val todayDayNum = cal.get(java.util.Calendar.DAY_OF_MONTH)
+                val updatedMonthly = h.monthlyHistory.toMutableMap()
+                updatedMonthly[todayDayNum] = newCompleted
                 h.copy(
                     completedToday = newCompleted,
                     streak = newStreak,
                     bestStreak = newBest,
-                    weeklyHistory = updatedWeekly
+                    weeklyHistory = updatedWeekly,
+                    monthlyHistory = updatedMonthly
                 )
+            } else h
+        }
+    }
+
+    fun toggleHabitDay(habitId: String, day: Int) {
+        _habits.value = _habits.value.map { h ->
+            if (h.id == habitId) {
+                val currentVal = h.monthlyHistory[day] ?: false
+                val updatedMonthly = h.monthlyHistory.toMutableMap()
+                updatedMonthly[day] = !currentVal
+                h.copy(monthlyHistory = updatedMonthly)
             } else h
         }
     }

@@ -154,6 +154,7 @@ fun HabitCard(
     habit: Habit,
     onToggleToday: () -> Unit,
     onViewDetails: () -> Unit,
+    onOpenHeatmap: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
@@ -232,17 +233,31 @@ fun HabitCard(
                     }
                 }
 
-                // Options button (view stats / details)
-                IconButton(
-                    onClick = onViewDetails,
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = "Detalles del hábito",
-                        tint = TextSubtle,
-                        modifier = Modifier.size(18.dp)
-                    )
+                // Options buttons (calendar heatmap & details)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = onOpenHeatmap,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CalendarMonth,
+                            contentDescription = "Calendario Mensual",
+                            tint = EmeraldPrimary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(4.dp))
+                    IconButton(
+                        onClick = onViewDetails,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "Detalles del hábito",
+                            tint = TextSubtle,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
 
@@ -856,5 +871,200 @@ private fun StatCard(
         Text(text = value, color = color, fontSize = 18.sp, fontWeight = FontWeight.Black)
         Spacer(modifier = Modifier.height(2.dp))
         Text(text = subtitle, color = TextSubtle, fontSize = 10.sp)
+    }
+}
+
+
+@Composable
+fun HabitCalendarHeatmapDialog(
+    habit: Habit,
+    onDismiss: () -> Unit,
+    onToggleDay: (Int) -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+                .testTag("habit_calendar_heatmap_dialog"),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkSurface),
+            border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(DarkBorder))
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Header with Emoji and Title
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(EmeraldPrimary.copy(alpha = 0.2f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = habit.emoji, fontSize = 20.sp)
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "Historial Mensual",
+                                color = TextMuted,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = habit.name,
+                                color = TextWhite,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = TextMuted)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Month header
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(DarkSurfaceVariant)
+                        .padding(vertical = 10.dp, horizontal = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "📅 Octubre 2026", color = TextWhite, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(
+                            text = "${habit.monthlyCompletedCount} de 31 días (${habit.monthlyConsistencyPercent}%)",
+                            color = EmeraldPrimary,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Weekday headers
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                    listOf("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom").forEach { dayName ->
+                        Text(
+                            text = dayName,
+                            color = TextSubtle,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.width(36.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Calendar Grid (October 2026 starts on Thursday -> 3 blank spaces before day 1)
+                val startOffset = 3
+                val totalCells = 31 + startOffset
+
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    for (row in 0 until (totalCells + 6) / 7) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 3.dp),
+                            horizontalArrangement = Arrangement.SpaceAround
+                        ) {
+                            for (col in 0 until 7) {
+                                val cellIndex = row * 7 + col
+                                val dayNum = cellIndex - startOffset + 1
+                                if (dayNum in 1..31) {
+                                    val isCompleted = habit.monthlyHistory[dayNum] == true
+                                    val isToday = dayNum == 14
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(
+                                                when {
+                                                    isCompleted -> EmeraldPrimary
+                                                    isToday -> DarkSurfaceVariant
+                                                    else -> DarkSurfaceVariant.copy(alpha = 0.5f)
+                                                }
+                                            )
+                                            .border(
+                                                width = if (isToday) 2.dp else 0.dp,
+                                                color = if (isToday) AmberTertiary else Color.Transparent,
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                            .clickable { onToggleDay(dayNum) },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = dayNum.toString(),
+                                            color = if (isCompleted) Color.Black else TextWhite,
+                                            fontSize = 12.sp,
+                                            fontWeight = if (isToday || isCompleted) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    }
+                                } else {
+                                    Spacer(modifier = Modifier.size(36.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Heatmap Legend
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(3.dp)).background(EmeraldPrimary))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(text = "Completado", color = TextMuted, fontSize = 11.sp)
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(3.dp)).background(DarkSurfaceVariant))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(text = "Pendiente", color = TextMuted, fontSize = 11.sp)
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Box(modifier = Modifier.size(12.dp).clip(RoundedCornerShape(3.dp)).border(1.dp, AmberTertiary, RoundedCornerShape(3.dp)))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(text = "Hoy", color = TextMuted, fontSize = 11.sp)
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary, contentColor = EmeraldOnPrimary)
+                ) {
+                    Text("Cerrar Calendario", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
     }
 }

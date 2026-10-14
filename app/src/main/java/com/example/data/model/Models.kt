@@ -1,5 +1,8 @@
 package com.example.data.model
 
+import com.google.firebase.auth.FirebaseUser
+
+
 enum class CurrencyCode(val symbol: String, val displayName: String) {
     VES("Bs.", "Bolívares (VES)"),
     USD("$", "Dólares (USD)"),
@@ -69,6 +72,22 @@ data class Budget(
     val currency: CurrencyCode,
     val period: String = "Mensual"
 )
+
+enum class BudgetAlertSeverity {
+    WARNING,
+    CRITICAL
+}
+
+data class BudgetAlert(
+    val budgetId: String,
+    val category: String,
+    val spent: Double,
+    val amount: Double,
+    val percentage: Int,
+    val severity: BudgetAlertSeverity,
+    val message: String
+)
+
 
 enum class TransactionSortOrder(val title: String, val icon: String) {
     DATE_DESC("Fecha: Más reciente", "🕒↓"),
@@ -211,9 +230,22 @@ data class Habit(
     val category: String = "General",
     val bestStreak: Int = streak,
     val weeklyHistory: List<Boolean> = listOf(true, true, true, false, true, true, false),
+    val monthlyHistory: Map<Int, Boolean> = mapOf(
+        1 to true, 2 to true, 3 to true, 4 to false, 5 to true, 6 to true, 7 to true,
+        8 to true, 9 to false, 10 to true, 11 to true, 12 to true, 13 to true, 14 to true
+    ),
     val targetDaysPerWeek: Int = 7,
     val notes: String = ""
 ) {
+    val monthlyCompletedCount: Int
+        get() = monthlyHistory.values.count { it }
+
+    val monthlyConsistencyPercent: Int
+        get() {
+            val totalSoFar = 14
+            return if (totalSoFar > 0) (monthlyCompletedCount * 100).coerceAtMost(100) else 0
+        }
+
     val streakTierTitle: String
         get() = when {
             streak >= 30 -> "Leyenda Imparable"
@@ -290,3 +322,9 @@ data class SupportTicket(
     val status: String,
     val date: String
 )
+
+val FirebaseUser?.fullName: String
+    get() = this?.displayName ?: this?.email?.substringBefore("@")?.replaceFirstChar { it.uppercase() } ?: "Usuario KoreLife"
+
+val FirebaseUser?.isDemo: Boolean
+    get() = this?.isAnonymous == true

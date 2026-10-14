@@ -52,6 +52,7 @@ fun TasksScreen(
     var showAddHabitDialog by remember { mutableStateOf(false) }
     var habitToEdit by remember { mutableStateOf<Habit?>(null) }
     var habitForDetails by remember { mutableStateOf<Habit?>(null) }
+    var habitForHeatmap by remember { mutableStateOf<Habit?>(null) }
 
     var showAddNoteDialog by remember { mutableStateOf(false) }
 
@@ -124,6 +125,21 @@ fun TasksScreen(
             onDelete = {
                 viewModel.deleteHabit(detailHabit.id)
                 habitForDetails = null
+            }
+        )
+    }
+
+    // Habit Calendar Heatmap Dialog
+    habitForHeatmap?.let { heatmapHabit ->
+        HabitCalendarHeatmapDialog(
+            habit = heatmapHabit,
+            onDismiss = { habitForHeatmap = null },
+            onToggleDay = { dayNum ->
+                viewModel.toggleHabitDay(heatmapHabit.id, dayNum)
+                val updated = viewModel.habits.value.find { it.id == heatmapHabit.id }
+                if (updated != null) {
+                    habitForHeatmap = updated
+                }
             }
         )
     }
@@ -239,6 +255,7 @@ fun TasksScreen(
                         habits = habits,
                         viewModel = viewModel,
                         onViewDetails = { habitForDetails = it },
+                        onOpenHeatmap = { habitForHeatmap = it },
                         onEditHabit = { habitToEdit = it },
                         onAddHabit = {
                             habitToEdit = null
@@ -518,6 +535,7 @@ private fun HabitsTab(
     habits: List<Habit>,
     viewModel: KoreLifeViewModel,
     onViewDetails: (Habit) -> Unit,
+    onOpenHeatmap: (Habit) -> Unit,
     onEditHabit: (Habit) -> Unit,
     onAddHabit: () -> Unit
 ) {
@@ -630,6 +648,7 @@ private fun HabitsTab(
                     habit = habit,
                     onToggleToday = { viewModel.toggleHabit(habit.id) },
                     onViewDetails = { onViewDetails(habit) },
+                    onOpenHeatmap = { onOpenHeatmap(habit) },
                     onEdit = { onEditHabit(habit) },
                     onDelete = { viewModel.deleteHabit(habit.id) }
                 )

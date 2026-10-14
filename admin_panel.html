@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KoreLife — Panel de Administración Maestro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10B981',
+                        darkBg: '#0F172A',
+                        cardBg: '#1E293B',
+                        sidebarBg: '#111827'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-darkBg text-gray-100 font-sans antialiased min-h-screen flex">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-sidebarBg border-r border-gray-800 flex flex-col justify-between hidden md:flex">
+        <div>
+            <div class="p-6 flex items-center space-x-3 border-b border-gray-800">
+                <div class="bg-primary text-darkBg p-2 rounded-xl font-bold text-xl flex items-center justify-center w-10 h-10">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-white">KoreLife Admin</h1>
+                    <span class="text-xs text-emerald-400 font-medium">Master Controller</span>
+                </div>
+            </div>
+            <nav class="p-4 space-y-1">
+                <a href="#" onclick="switchTab('dashboard')" id="nav-dashboard" class="flex items-center space-x-3 px-4 py-3 rounded-xl bg-primary text-darkBg font-semibold transition">
+                    <i class="fa-solid fa-chart-pie w-5"></i>
+                    <span>Dashboard Global</span>
+                </a>
+                <a href="#" onclick="switchTab('users')" id="nav-users" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition">
+                    <i class="fa-solid fa-users w-5"></i>
+                    <span>Usuarios</span>
+                </a>
+                <a href="#" onclick="switchTab('finances')" id="nav-finances" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition">
+                    <i class="fa-solid fa-wallet w-5"></i>
+                    <span>Finanzas & Tasas</span>
+                </a>
+                <a href="#" onclick="switchTab('habits')" id="nav-habits" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition">
+                    <i class="fa-solid fa-fire w-5"></i>
+                    <span>Hábitos y Tareas</span>
+                </a>
+                <a href="#" onclick="switchTab('tickets')" id="nav-tickets" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition">
+                    <i class="fa-solid fa-headset w-5"></i>
+                    <span>Soporte / Tickets</span>
+                    <span class="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">3</span>
+                </a>
+            </nav>
+        </div>
+        <div class="p-4 border-t border-gray-800">
+            <div class="flex items-center space-x-3 p-3 bg-gray-800/50 rounded-xl">
+                <div class="bg-emerald-500/20 text-emerald-400 w-9 h-9 rounded-full flex items-center justify-center font-bold">
+                    AD
+                </div>
+                <div class="overflow-hidden">
+                    <p class="text-sm font-semibold text-white truncate">Admin Maestro</p>
+                    <p class="text-xs text-gray-400 truncate">admin@korelife.app</p>
+                </div>
+                <button onclick="logout()" class="ml-auto text-gray-400 hover:text-red-400 transition" title="Cerrar sesión">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <!-- Top Header -->
+        <header class="bg-cardBg border-b border-gray-800 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
+            <div class="flex items-center space-x-4">
+                <h2 id="page-title" class="text-xl font-bold text-white">Dashboard General de Plataforma</h2>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Firebase & Supabase Sync Activo</span>
+                </div>
+                <div class="text-right hidden sm:block">
+                    <p class="text-xs text-gray-400">Versión 1.0.0</p>
+                    <p class="text-xs font-bold text-emerald-400">Modo Administrador</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic View Container -->
+        <div class="p-8 space-y-8">
+
+            <!-- TAB: DASHBOARD -->
+            <section id="tab-dashboard" class="space-y-8">
+                <!-- Metrics Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-cardBg border border-gray-800 p-6 rounded-2xl shadow-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-400 font-medium">Usuarios Totales</p>
+                                <h3 class="text-3xl font-bold text-white mt-1">1,482</h3>
+                            </div>
+                            <div class="bg-emerald-500/20 text-primary p-3 rounded-xl">
+                                <i class="fa-solid fa-users text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-emerald-400 mt-4 flex items-center"><i class="fa-solid fa-arrow-up mr-1"></i> +12% este mes</p>
+                    </div>
+
+                    <div class="bg-cardBg border border-gray-800 p-6 rounded-2xl shadow-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-400 font-medium">Volumen Transaccional</p>
+                                <h3 class="text-3xl font-bold text-white mt-1">$128,450</h3>
+                            </div>
+                            <div class="bg-blue-500/20 text-blue-400 p-3 rounded-xl">
+                                <i class="fa-solid fa-money-bill-transfer text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-blue-400 mt-4 flex items-center"><i class="fa-solid fa-arrow-up mr-1"></i> +8.4% vs mes anterior</p>
+                    </div>
+
+                    <div class="bg-cardBg border border-gray-800 p-6 rounded-2xl shadow-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-400 font-medium">Tasas BCV / Binance</p>
+                                <h3 class="text-3xl font-bold text-white mt-1">36.52 / 37.10</h3>
+                            </div>
+                            <div class="bg-purple-500/20 text-purple-400 p-3 rounded-xl">
+                                <i class="fa-solid fa-chart-line text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-purple-400 mt-4 flex items-center"><i class="fa-solid fa-rotate mr-1"></i> Actualizado hace 2m</p>
+                    </div>
+
+                    <div class="bg-cardBg border border-gray-800 p-6 rounded-2xl shadow-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-400 font-medium">Tickets de Soporte</p>
+                                <h3 class="text-3xl font-bold text-white mt-1">3 Abiertos</h3>
+                            </div>
+                            <div class="bg-amber-500/20 text-amber-400 p-3 rounded-xl">
+                                <i class="fa-solid fa-headset text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-amber-400 mt-4 flex items-center"><i class="fa-solid fa-clock mr-1"></i> Tiempo resp. prom: 14m</p>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="bg-cardBg border border-gray-800 p-6 rounded-2xl lg:col-span-2 shadow-lg">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="font-bold text-lg text-white">Ingresos vs Gastos Mensuales (Plataforma)</h3>
+                            <span class="text-xs text-gray-400 bg-gray-800 px-3 py-1 rounded-lg">Octubre 2026</span>
+                        </div>
+                        <div class="h-80">
+                            <canvas id="financeChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-cardBg border border-gray-800 p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-bold text-lg text-white mb-4">Estado del Servidor & Cloud</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-xl">
+                                    <span class="text-sm text-gray-300">Firebase Firestore</span>
+                                    <span class="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-semibold rounded-lg">Operativo</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-xl">
+                                    <span class="text-sm text-gray-300">Supabase Auth RLS</span>
+                                    <span class="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-semibold rounded-lg">Seguro</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-xl">
+                                    <span class="text-sm text-gray-300">BCV API Sync</span>
+                                    <span class="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-semibold rounded-lg">Sincronizado</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-xl">
+                                    <span class="text-sm text-gray-300">Binance P2P API</span>
+                                    <span class="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-semibold rounded-lg">Sincronizado</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="alert('Sistema de diagnóstico ejecutado con éxito. Todos los servicios responden correctamente.')" class="w-full mt-6 bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-xl font-semibold transition text-sm">
+                            <i class="fa-solid fa-stethoscope mr-2"></i> Ejecutar Diagnóstico Global
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: USERS -->
+            <section id="tab-users" class="space-y-8 hidden">
+                <div class="bg-cardBg border border-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                    <div class="p-6 border-b border-gray-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h3 class="font-bold text-lg text-white">Gestión de Usuarios</h3>
+                            <p class="text-xs text-gray-400">Control de cuentas, membresías Premium y permisos</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <input type="text" placeholder="Buscar usuario..." class="bg-gray-800 border border-gray-700 px-4 py-2 rounded-xl text-sm focus:outline-none focus:border-primary text-white">
+                            <button onclick="alert('Nuevo usuario invitado correctamente')" class="bg-primary text-darkBg px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-400 transition">
+                                <i class="fa-solid fa-user-plus mr-2"></i> Nuevo
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-800/50 text-gray-400 text-xs uppercase tracking-wider">
+                                    <th class="p-4">Usuario</th>
+                                    <th class="p-4">Email</th>
+                                    <th class="p-4">Plan</th>
+                                    <th class="p-4">Estado</th>
+                                    <th class="p-4">Registro</th>
+                                    <th class="p-4 text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-800 text-sm">
+                                <tr class="hover:bg-gray-800/30 transition">
+                                    <td class="p-4 font-bold text-white flex items-center space-x-3">
+                                        <div class="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold">ED</div>
+                                        <span>Edgar López</span>
+                                    </td>
+                                    <td class="p-4 text-gray-300">ed11jo78@gmail.com</td>
+                                    <td class="p-4"><span class="px-2.5 py-1 bg-purple-500/20 text-purple-400 rounded-lg text-xs font-semibold">Premium Master</span></td>
+                                    <td class="p-4"><span class="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 rounded-lg text-xs font-semibold">Activo</span></td>
+                                    <td class="p-4 text-gray-400">12 Oct 2026</td>
+                                    <td class="p-4 text-right space-x-2">
+                                        <button onclick="alert('Editando permisos para Edgar López')" class="text-gray-400 hover:text-white transition"><i class="fa-solid fa-pen"></i></button>
+                                        <button onclick="alert('Usuario baneado temporalmente')" class="text-red-400 hover:text-red-300 transition"><i class="fa-solid fa-ban"></i></button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-800/30 transition">
+                                    <td class="p-4 font-bold text-white flex items-center space-x-3">
+                                        <div class="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">MC</div>
+                                        <span>María Carvajal</span>
+                                    </td>
+                                    <td class="p-4 text-gray-300">maria.c@gmail.com</td>
+                                    <td class="p-4"><span class="px-2.5 py-1 bg-gray-700 text-gray-300 rounded-lg text-xs font-semibold">Free</span></td>
+                                    <td class="p-4"><span class="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 rounded-lg text-xs font-semibold">Activo</span></td>
+                                    <td class="p-4 text-gray-400">10 Oct 2026</td>
+                                    <td class="p-4 text-right space-x-2">
+                                        <button onclick="alert('Editando permisos para María Carvajal')" class="text-gray-400 hover:text-white transition"><i class="fa-solid fa-pen"></i></button>
+                                        <button onclick="alert('Usuario baneado temporalmente')" class="text-red-400 hover:text-red-300 transition"><i class="fa-solid fa-ban"></i></button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-800/30 transition">
+                                    <td class="p-4 font-bold text-white flex items-center space-x-3">
+                                        <div class="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">JR</div>
+                                        <span>José Rodríguez</span>
+                                    </td>
+                                    <td class="p-4 text-gray-300">jose.rod@outlook.com</td>
+                                    <td class="p-4"><span class="px-2.5 py-1 bg-purple-500/20 text-purple-400 rounded-lg text-xs font-semibold">Premium</span></td>
+                                    <td class="p-4"><span class="px-2.5 py-1 bg-red-500/20 text-red-400 rounded-lg text-xs font-semibold">Suspendido</span></td>
+                                    <td class="p-4 text-gray-400">05 Oct 2026</td>
+                                    <td class="p-4 text-right space-x-2">
+                                        <button onclick="alert('Cuenta reactivada')" class="text-emerald-400 hover:text-emerald-300 transition"><i class="fa-solid fa-check"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: FINANCES & RATES -->
+            <section id="tab-finances" class="space-y-8 hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-cardBg border border-gray-800 p-6 rounded-2xl shadow-lg">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-lg text-white">Tasa Oficial BCV</h3>
+                            <span class="bg-emerald-500/20 text-emerald-400 text-xs px-2.5 py-1 rounded-lg font-semibold">Live API</span>
+                        </div>
+                        <div class="flex items-baseline space-x-3 my-4">
+                            <span class="text-4xl font-extrabold text-white">36.52</span>
+                            <span class="text-gray-400">VES / USD</span>
+                            <span class="text-emerald-400 text-sm font-bold ml-auto">+0.15% hoy</span>
+                        </div>
+                        <p class="text-xs text-gray-400">Última sincronización: Hace 5 minutos desde el Banco Central de Venezuela.</p>
+                        <button onclick="alert('Tasa BCV forzada a actualizar con éxito')" class="mt-6 w-full bg-gray-800 hover:bg-gray-700 text-white py-2.5 rounded-xl text-sm font-semibold transition">
+                            <i class="fa-solid fa-rotate mr-2"></i> Forzar Sincronización BCV
+                        </button>
+                    </div>
+
+                    <div class="bg-cardBg border border-gray-800 p-6 rounded-2xl shadow-lg">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-lg text-white">Tasa Promedio Binance P2P</h3>
+                            <span class="bg-blue-500/20 text-blue-400 text-xs px-2.5 py-1 rounded-lg font-semibold">Live API</span>
+                        </div>
+                        <div class="flex items-baseline space-x-3 my-4">
+                            <span class="text-4xl font-extrabold text-white">37.10</span>
+                            <span class="text-gray-400">VES / USDT</span>
+                            <span class="text-emerald-400 text-sm font-bold ml-auto">+0.42% hoy</span>
+                        </div>
+                        <p class="text-xs text-gray-400">Última sincronización: Hace 2 minutos desde el mercado P2P de Binance.</p>
+                        <button onclick="alert('Tasa Binance forzada a actualizar con éxito')" class="mt-6 w-full bg-gray-800 hover:bg-gray-700 text-white py-2.5 rounded-xl text-sm font-semibold transition">
+                            <i class="fa-solid fa-rotate mr-2"></i> Forzar Sincronización Binance
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: HABITS & TASKS -->
+            <section id="tab-habits" class="space-y-8 hidden">
+                <div class="bg-cardBg border border-gray-800 p-6 rounded-2xl shadow-lg">
+                    <h3 class="font-bold text-lg text-white mb-4">Consistencia Global de Hábitos (Octubre 2026)</h3>
+                    <p class="text-sm text-gray-400 mb-6">Mapa de calor agregado de cumplimiento de hábitos de todos los usuarios activos en la plataforma.</p>
+                    <div class="grid grid-cols-7 sm:grid-cols-10 gap-2">
+                        <!-- Simulated heat map cells -->
+                        <script>
+                            for(let i=1; i<=31; i++) {
+                                let opacityClass = i % 3 === 0 ? 'bg-primary text-darkBg font-bold' : (i % 2 === 0 ? 'bg-emerald-600/60 text-white' : 'bg-emerald-900/40 text-gray-300');
+                                document.write(`<div class="aspect-square rounded-xl ${opacityClass} flex flex-col items-center justify-center text-xs p-1"><span>${i}</span><span class="text-[9px] opacity-80">${Math.floor(75 + Math.random()*20)}%</span></div>`);
+                            }
+                        </script>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: TICKETS -->
+            <section id="tab-tickets" class="space-y-8 hidden">
+                <div class="bg-cardBg border border-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                    <div class="p-6 border-b border-gray-800 flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-lg text-white">Tickets de Soporte Abiertos</h3>
+                            <p class="text-xs text-gray-400">Atención al cliente y resolución de incidencias</p>
+                        </div>
+                        <span class="bg-red-500/20 text-red-400 text-xs px-3 py-1 rounded-full font-bold">3 pendientes</span>
+                    </div>
+                    <div class="divide-y divide-gray-800">
+                        <div class="p-6 hover:bg-gray-800/30 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="px-2.5 py-0.5 bg-red-500/20 text-red-400 text-xs rounded font-semibold">Urgente</span>
+                                    <h4 class="font-bold text-white">Error al sincronizar cuentas bancarias</h4>
+                                </div>
+                                <p class="text-sm text-gray-400 mt-1">Usuario: Maria Carvajal (maria.c@gmail.com) — Reporta que la cuenta no actualiza el saldo al transferir.</p>
+                            </div>
+                            <button onclick="alert('Abriendo chat de soporte para resolver ticket #102')" class="bg-primary text-darkBg px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-400 transition whitespace-nowrap">
+                                Responder
+                            </button>
+                        </div>
+                        <div class="p-6 hover:bg-gray-800/30 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="px-2.5 py-0.5 bg-amber-500/20 text-amber-400 text-xs rounded font-semibold">Medio</span>
+                                    <h4 class="font-bold text-white">Duda sobre presupuesto Zero-Based</h4>
+                                </div>
+                                <p class="text-sm text-gray-400 mt-1">Usuario: José Rodríguez (jose.rod@outlook.com) — Pregunta cómo asignar sobrantes al fondo de ahorro.</p>
+                            </div>
+                            <button onclick="alert('Abriendo chat de soporte para resolver ticket #103')" class="bg-primary text-darkBg px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-400 transition whitespace-nowrap">
+                                Responder
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Script Logic -->
+    <script>
+        function switchTab(tabId) {
+            // Hide all tabs
+            ['dashboard', 'users', 'finances', 'habits', 'tickets'].forEach(t => {
+                document.getElementById('tab-' + t).classList.add('hidden');
+                document.getElementById('nav-' + t).className = "flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition";
+            });
+
+            // Show selected tab
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            document.getElementById('nav-' + tabId).className = "flex items-center space-x-3 px-4 py-3 rounded-xl bg-primary text-darkBg font-semibold transition";
+
+            // Update title
+            const titles = {
+                'dashboard': 'Dashboard General de Plataforma',
+                'users': 'Gestión de Usuarios',
+                'finances': 'Finanzas, Presupuestos y Tasas de Cambio',
+                'habits': 'Consistencia de Hábitos y Tareas',
+                'tickets': 'Mesa de Soporte y Tickets'
+            };
+            document.getElementById('page-title').innerText = titles[tabId];
+        }
+
+        function logout() {
+            if(confirm('¿Desea cerrar sesión del Panel Administrador Maestro?')) {
+                alert('Sesión cerrada correctamente.');
+            }
+        }
+
+        // Initialize Chart.js
+        const ctx = document.getElementById('financeChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct'],
+                datasets: [
+                    {
+                        label: 'Ingresos Totales ($)',
+                        data: [18000, 22000, 24000, 21000, 29000, 34000],
+                        backgroundColor: '#10B981',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Gastos Totales ($)',
+                        data: [12000, 15000, 16000, 14000, 19000, 22000],
+                        backgroundColor: '#EF4444',
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#9CA3AF' }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: '#9CA3AF' }, grid: { color: '#334155' } },
+                    y: { ticks: { color: '#9CA3AF' }, grid: { color: '#334155' } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -32,6 +32,8 @@ import com.example.R
 import com.example.data.supabase.SupabaseConfig
 import com.example.ui.KoreLifeViewModel
 import com.example.ui.theme.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 @Composable
 fun AuthScreen(
@@ -427,6 +429,53 @@ fun AuthScreen(
                         Icon(Icons.Default.FlashOn, contentDescription = null, tint = IndigoSecondary, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(text = "Ingresar con Usuario Demo", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Google Sign-In Button with Credential Manager
+                    val context = androidx.compose.ui.platform.LocalContext.current
+                    val coroutineScope = rememberCoroutineScope()
+                    val credentialManager = remember { androidx.credentials.CredentialManager.create(context) }
+
+                    OutlinedButton(
+                        onClick = {
+                            val clientId = try {
+                                context.getString(R.string.default_web_client_id)
+                            } catch (e: Exception) {
+                                errorMessage = "default_web_client_id no encontrado"
+                                return@OutlinedButton
+                            }
+                            val signInOption = com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption.Builder(serverClientId = clientId).build()
+                            val request = androidx.credentials.GetCredentialRequest.Builder().addCredentialOption(signInOption).build()
+                            coroutineScope.launch {
+                                try {
+                                    val result = credentialManager.getCredential(context as android.app.Activity, request)
+                                    val credential = result.credential
+                                    if (credential is androidx.credentials.CustomCredential && credential.type == com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                                        val googleIdToken = com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.createFrom(credential.data).idToken
+                                        val authCredential = com.google.firebase.auth.GoogleAuthProvider.getCredential(googleIdToken, null)
+                                        com.google.firebase.auth.FirebaseAuth.getInstance().signInWithCredential(authCredential).await()
+                                        onAuthSuccess()
+                                    }
+                                } catch (e: androidx.credentials.exceptions.GetCredentialCancellationException) {
+                                    // User dismissed
+                                } catch (e: Exception) {
+                                    errorMessage = e.localizedMessage ?: "Error en Google Sign-In"
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .testTag("auth_google_button"),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = TextWhite),
+                        border = ButtonDefaults.outlinedButtonBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(DarkBorder))
+                    ) {
+                        Text(text = "🌐", fontSize = 16.sp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = "Continuar con Google", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
                 }
             }

@@ -1,0 +1,93 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['userId', 'accountId', 'amount', 'currency', 'type', 'category', 'date']) &&
+             data.userId is string &&
+             data.accountId is string &&
+             data.amount is number &&
+             data.currency is string &&
+             data.type is string &&
+             data.category is string &&
+             data.date is string;
+    }
+
+    function isValidAccount(data) {
+      return data.keys().hasAll(['userId', 'name', 'type', 'balance', 'currency']) &&
+             data.userId is string &&
+             data.name is string &&
+             data.type is string &&
+             data.balance is number &&
+             data.currency is string;
+    }
+
+    function isValidBudget(data) {
+      return data.keys().hasAll(['userId', 'category', 'amount', 'spent', 'currency']) &&
+             data.userId is string &&
+             data.category is string &&
+             data.amount is number &&
+             data.spent is number &&
+             data.currency is string;
+    }
+
+    function isValidTask(data) {
+      return data.keys().hasAll(['userId', 'title', 'completed', 'priority', 'status']) &&
+             data.userId is string &&
+             data.title is string &&
+             data.completed is bool &&
+             data.priority is string &&
+             data.status is string;
+    }
+
+    function isValidHabit(data) {
+      return data.keys().hasAll(['userId', 'name', 'streak', 'completedToday']) &&
+             data.userId is string &&
+             data.name is string &&
+             data.streak is int &&
+             data.completedToday is bool;
+    }
+
+    function isValidGoal(data) {
+      return data.keys().hasAll(['userId', 'title', 'targetAmount', 'currentAmount', 'currency', 'deadline']) &&
+             data.userId is string &&
+             data.title is string &&
+             data.targetAmount is number &&
+             data.currentAmount is number &&
+             data.currency is string &&
+             data.deadline is string;
+    }
+
+    match /users/{userId}/transactions/{transactionId} {
+      allow read, write: if isOwner(userId) && (request.method != 'create' && request.method != 'update' || isValidTransaction(request.resource.data));
+    }
+
+    match /users/{userId}/accounts/{accountId} {
+      allow read, write: if isOwner(userId) && (request.method != 'create' && request.method != 'update' || isValidAccount(request.resource.data));
+    }
+
+    match /users/{userId}/budgets/{budgetId} {
+      allow read, write: if isOwner(userId) && (request.method != 'create' && request.method != 'update' || isValidBudget(request.resource.data));
+    }
+
+    match /users/{userId}/tasks/{taskId} {
+      allow read, write: if isOwner(userId) && (request.method != 'create' && request.method != 'update' || isValidTask(request.resource.data));
+    }
+
+    match /users/{userId}/habits/{habitId} {
+      allow read, write: if isOwner(userId) && (request.method != 'create' && request.method != 'update' || isValidHabit(request.resource.data));
+    }
+
+    match /users/{userId}/goals/{goalId} {
+      allow read, write: if isOwner(userId) && (request.method != 'create' && request.method != 'update' || isValidGoal(request.resource.data));
+    }
+  }
+}
