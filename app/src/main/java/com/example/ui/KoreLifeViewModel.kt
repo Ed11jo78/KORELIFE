@@ -26,6 +26,14 @@ class KoreLifeViewModel : ViewModel() {
     private val _isAuthLoading = kotlinx.coroutines.flow.MutableStateFlow(false)
     val isAuthLoading: StateFlow<Boolean> = _isAuthLoading.asStateFlow()
 
+    private val _isDemoMode = kotlinx.coroutines.flow.MutableStateFlow(false)
+    val isDemoMode: StateFlow<Boolean> = _isDemoMode.asStateFlow()
+
+    fun enableDemoMode() {
+        _isDemoMode.value = true
+        repository.loadDemoData()
+    }
+
     init {
         auth.addAuthStateListener { firebaseAuth ->
             _currentUser.value = firebaseAuth.currentUser
@@ -141,6 +149,7 @@ class KoreLifeViewModel : ViewModel() {
 
     fun signOut() {
         auth.signOut()
+        _isDemoMode.value = false
     }
 
     // --- Rates Functions ---

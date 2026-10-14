@@ -72,156 +72,32 @@ class KoreLifeRepository(private val coroutineScope: CoroutineScope) {
     val isRatesLoading: StateFlow<Boolean> = _isRatesLoading.asStateFlow()
 
     // --- Financial State ---
-    private val _accounts = MutableStateFlow(
-        listOf(
-            Account("1", "Banesco (Bolívares)", AccountType.BANK, 145200.50, CurrencyCode.VES),
-            Account("2", "Mercantil (Bolívares)", AccountType.BANK, 87500.00, CurrencyCode.VES),
-            Account("3", "Efectivo USD ($)", AccountType.CASH, 450.00, CurrencyCode.USD),
-            Account("4", "Binance USDT", AccountType.INVESTMENT, 320.00, CurrencyCode.USD)
-        )
-    )
+    private val _accounts = MutableStateFlow<List<Account>>(emptyList())
     val accounts: StateFlow<List<Account>> = _accounts.asStateFlow()
 
-    private val _transactions = MutableStateFlow(
-        listOf(
-            Transaction("t1", "1", 3500.00, CurrencyCode.VES, TransactionType.EXPENSE, "Supermercado", "Compras de la semana", "2026-10-12"),
-            Transaction("t2", "1", 85000.00, CurrencyCode.VES, TransactionType.INCOME, "Nómina", "Pago de quincena", "2026-10-10"),
-            Transaction("t3", "3", 50.00, CurrencyCode.USD, TransactionType.EXPENSE, "Servicios", "Internet fibra óptica", "2026-10-09"),
-            Transaction("t4", "4", 150.00, CurrencyCode.USD, TransactionType.INCOME, "Freelance", "Diseño UX/UI Proyecto", "2026-10-08")
-        )
-    )
+    private val _transactions = MutableStateFlow<List<Transaction>>(emptyList())
     val transactions: StateFlow<List<Transaction>> = _transactions.asStateFlow()
 
-    private val _budgets = MutableStateFlow(
-        listOf(
-            Budget("b1", "Alimentación", 25000.0, 14200.0, CurrencyCode.VES),
-            Budget("b2", "Transporte & Movilidad", 8000.0, 3400.0, CurrencyCode.VES),
-            Budget("b3", "Servicios del Hogar", 6000.0, 5800.0, CurrencyCode.VES),
-            Budget("b4", "Entretenimiento", 4000.0, 1850.0, CurrencyCode.VES)
-        )
-    )
+    private val _budgets = MutableStateFlow<List<Budget>>(emptyList())
     val budgets: StateFlow<List<Budget>> = _budgets.asStateFlow()
 
-    private val _recurringExpenses = MutableStateFlow(
-        listOf(
-            RecurringExpense(
-                id = "rec_1",
-                title = "Alquiler Departamento",
-                amount = 250.0,
-                currency = CurrencyCode.USD,
-                category = "Hogar",
-                dayOfMonth = 1,
-                accountId = "3",
-                autoDeduct = true,
-                isActive = true,
-                lastDeductedMonth = "2026-10",
-                notes = "Pago directo mensual al propietario"
-            ),
-            RecurringExpense(
-                id = "rec_2",
-                title = "Internet Fibra Óptica 300MB",
-                amount = 35.0,
-                currency = CurrencyCode.USD,
-                category = "Servicios del Hogar",
-                dayOfMonth = 15,
-                accountId = "3",
-                autoDeduct = true,
-                isActive = true,
-                lastDeductedMonth = null,
-                notes = "Débito del día 15 cada mes"
-            ),
-            RecurringExpense(
-                id = "rec_3",
-                title = "Condominio Residencial",
-                amount = 1850.0,
-                currency = CurrencyCode.VES,
-                category = "Servicios del Hogar",
-                dayOfMonth = 10,
-                accountId = "1",
-                autoDeduct = true,
-                isActive = true,
-                lastDeductedMonth = "2026-10",
-                notes = "Abono a cuenta junta de condominio"
-            ),
-            RecurringExpense(
-                id = "rec_4",
-                title = "Gimnasio & Bienestar",
-                amount = 25.0,
-                currency = CurrencyCode.USD,
-                category = "Salud",
-                dayOfMonth = 5,
-                accountId = "4",
-                autoDeduct = true,
-                isActive = true,
-                lastDeductedMonth = "2026-10",
-                notes = "Membresía mensual de entrenamiento"
-            ),
-            RecurringExpense(
-                id = "rec_5",
-                title = "Fondo de Alimentación Quincenal",
-                amount = 5500.0,
-                currency = CurrencyCode.VES,
-                category = "Alimentación",
-                dayOfMonth = 16,
-                accountId = "1",
-                autoDeduct = true,
-                isActive = true,
-                lastDeductedMonth = null,
-                notes = "Asignación para víveres y supermercado"
-            )
-        )
-    )
+    private val _recurringExpenses = MutableStateFlow<List<RecurringExpense>>(emptyList())
     val recurringExpenses: StateFlow<List<RecurringExpense>> = _recurringExpenses.asStateFlow()
 
-    private val _goals = MutableStateFlow(
-        listOf(
-            Goal("g1", "Fondo de Emergencia", "🛡️", 5000.0, 2100.0, CurrencyCode.USD, "2026-12-31", 0xFF10B981),
-            Goal("g2", "Nuevo Teléfono", "📱", 1200.0, 900.0, CurrencyCode.USD, "2026-11-30", 0xFFF59E0B),
-            Goal("g3", "Vacaciones Fin de Año", "✈️", 2500.0, 1400.0, CurrencyCode.USD, "2026-12-15", 0xFF6366F1)
-        )
-    )
+    private val _goals = MutableStateFlow<List<Goal>>(emptyList())
     val goals: StateFlow<List<Goal>> = _goals.asStateFlow()
 
-    private val _subscriptions = MutableStateFlow(
-        listOf(
-            Subscription("s1", "Netflix Premium", "🍿", 15.99, CurrencyCode.USD, "Mensual", "28 Oct 2026", true),
-            Subscription("s2", "Spotify Dúo", "🎵", 6.99, CurrencyCode.USD, "Mensual", "02 Nov 2026", true),
-            Subscription("s3", "Fibra Óptica 300MB", "🌐", 35.00, CurrencyCode.USD, "Mensual", "15 Nov 2026", true),
-            Subscription("s4", "Gimnasio Fitness", "💪", 25.00, CurrencyCode.USD, "Mensual", "01 Nov 2026", true)
-        )
-    )
+    private val _subscriptions = MutableStateFlow<List<Subscription>>(emptyList())
     val subscriptions: StateFlow<List<Subscription>> = _subscriptions.asStateFlow()
 
     // --- Productivity State ---
-    private val _tasks = MutableStateFlow(
-        listOf(
-            KoreTask("1", "Pagar factura de luz y fibra óptica", "Facturas del mes en curso", false, Priority.HIGH, "2026-10-15", KanbanStatus.TODO, "Finanzas"),
-            KoreTask("2", "Conciliar cuentas en Banesco y Mercantil", "Revisión de comprobantes y saldos", true, Priority.MEDIUM, "2026-10-14", KanbanStatus.DONE, "Finanzas"),
-            KoreTask("3", "Revisar asignación en presupuesto YNAB", "Ajustar sobre de alimentación y servicios", false, Priority.MEDIUM, "2026-10-16", KanbanStatus.IN_PROGRESS, "Presupuesto"),
-            KoreTask("4", "Comprar víveres y despensa quincenal", "Verificar lista en supermercado", false, Priority.HIGH, "2026-10-17", KanbanStatus.TODO, "Personal"),
-            KoreTask("5", "Respaldar informes en la nube", "Documentos personales y financieros", false, Priority.LOW, "2026-10-20", KanbanStatus.TODO, "Productividad"),
-            KoreTask("6", "Declaración de ingresos trimestral", "Revisar facturación electrónica", false, Priority.HIGH, "2026-10-14", KanbanStatus.TODO, "Trabajo")
-        )
-    )
+    private val _tasks = MutableStateFlow<List<KoreTask>>(emptyList())
     val tasks: StateFlow<List<KoreTask>> = _tasks.asStateFlow()
 
-    private val _habits = MutableStateFlow(
-        listOf(
-            Habit("h1", "Ejercicio matutino 30 min", 7, false, "Diario", "🏃", "Salud", 14, listOf(true, true, true, true, true, true, false)),
-            Habit("h2", "Lectura de finanzas y productividad", 14, true, "Diario", "📚", "Aprendizaje", 21, listOf(true, true, true, true, true, true, true)),
-            Habit("h3", "Registrar todos los gastos del día", 12, false, "Diario", "💰", "Finanzas", 18, listOf(true, true, true, true, true, false, false)),
-            Habit("h4", "Tomar 2L de agua", 5, true, "Diario", "💧", "Salud", 9, listOf(true, true, false, true, true, true, true)),
-            Habit("h5", "Meditación o respiración 10 min", 22, true, "Diario", "🧘", "Bienestar", 22, listOf(true, true, true, true, true, true, true))
-        )
-    )
+    private val _habits = MutableStateFlow<List<Habit>>(emptyList())
     val habits: StateFlow<List<Habit>> = _habits.asStateFlow()
 
-    private val _notes = MutableStateFlow(
-        listOf(
-            Note("n1", "Estrategia de Fondos 50/30/20", "50% Necesidades básicas, 30% Deseos y compras, 20% Ahorro e inversiones directas.", "2026-10-10"),
-            Note("n2", "Reglas de Arbitraje y Cambio", "Verificar siempre tasa oficial BCV antes de fijar pagos de proveedores locales.", "2026-10-11")
-        )
-    )
+    private val _notes = MutableStateFlow<List<Note>>(emptyList())
     val notes: StateFlow<List<Note>> = _notes.asStateFlow()
 
     // --- Social / Community State ---
@@ -953,5 +829,52 @@ class KoreLifeRepository(private val coroutineScope: CoroutineScope) {
 
     fun setThemeMode(mode: ThemeMode) {
         _themeMode.value = mode
+    }
+
+    fun loadDemoData() {
+        _accounts.value = listOf(
+            Account("1", "Banesco (Bolívares)", AccountType.BANK, 145200.50, CurrencyCode.VES),
+            Account("2", "Mercantil (Bolívares)", AccountType.BANK, 87500.00, CurrencyCode.VES),
+            Account("3", "Binance USDT", AccountType.INVESTMENT, 1250.00, CurrencyCode.USD),
+            Account("4", "Efectivo USD", AccountType.CASH, 320.00, CurrencyCode.USD),
+            Account("5", "Airtm", AccountType.INVESTMENT, 450.00, CurrencyCode.USD)
+        )
+
+        _transactions.value = listOf(
+            Transaction("t1", "1", 25000.0, CurrencyCode.VES, TransactionType.EXPENSE, "Alimentación", "Supermercado Central", dateFormat.format(Date())),
+            Transaction("t2", "3", 350.0, CurrencyCode.USD, TransactionType.INCOME, "Salario", "Pago quincenal remoto", dateFormat.format(Date())),
+            Transaction("t3", "1", 8500.0, CurrencyCode.VES, TransactionType.EXPENSE, "Transporte", "Gasolina y estacionamiento", dateFormat.format(Date())),
+            Transaction("t4", "4", 45.0, CurrencyCode.USD, TransactionType.EXPENSE, "Entretenimiento", "Cena y café", dateFormat.format(Date()))
+        )
+
+        _budgets.value = listOf(
+            Budget("b1", "Alimentación", 80000.0, 35000.0, CurrencyCode.VES),
+            Budget("b2", "Transporte", 30000.0, 12000.0, CurrencyCode.VES),
+            Budget("b3", "Entretenimiento", 200.0, 45.0, CurrencyCode.USD),
+            Budget("b4", "Servicios", 15000.0, 14200.0, CurrencyCode.VES)
+        )
+
+        _goals.value = listOf(
+            Goal("g1", "Fondo de Emergencia", "🎯", 1500.0, 1250.0, CurrencyCode.USD, "2026-12-31", category = "Ahorro"),
+            Goal("g2", "Viaje a Margarita", "✈️", 800.0, 320.0, CurrencyCode.USD, "2026-08-15", category = "Vacaciones")
+        )
+
+        _tasks.value = listOf(
+            KoreTask("tk1", "Revisar tasas BCV y Binance", description = "Analizar mercado P2P", completed = false, priority = Priority.HIGH, dueDate = "2026-10-15"),
+            KoreTask("tk2", "Actualizar presupuesto mensual", description = "Revisar gastos de alimentación", completed = true, priority = Priority.MEDIUM, dueDate = "2026-10-16"),
+            KoreTask("tk3", "Pagar servicio de internet", description = "Fibra óptica", completed = false, priority = Priority.HIGH, dueDate = "2026-10-18")
+        )
+
+        _habits.value = listOf(
+            Habit("h1", "Leer 15 páginas", streak = 14, completedToday = true, emoji = "📚", category = "Educación"),
+            Habit("h2", "Beber 2L de agua", streak = 20, completedToday = true, emoji = "💧", category = "Salud"),
+            Habit("h3", "Meditación 10 min", streak = 8, completedToday = false, emoji = "🧘", category = "Bienestar"),
+            Habit("h4", "Ejercicio / Gym", streak = 12, completedToday = true, emoji = "🏋️", category = "Salud")
+        )
+
+        _notes.value = listOf(
+            Note("n1", "Estrategia Financiera Octubre", "Mantener conversión USDT/VES optimizada y registrar todos los gastos diarios.", "2026-10-01"),
+            Note("n2", "Ideas de Proyectos", "Desarrollar app de control de inventarios personales.", "2026-10-05")
+        )
     }
 }

@@ -51,7 +51,6 @@ fun AuthScreen(
     var showForgotPasswordDialog by remember { mutableStateOf(false) }
 
     val isAuthLoading by viewModel.isAuthLoading.collectAsState()
-
     val scrollState = rememberScrollState()
 
     if (showForgotPasswordDialog) {
@@ -107,7 +106,7 @@ fun AuthScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Supabase Backend Status Pill
+            // Supabase / Firebase Status Pill
             val isConfigured = SupabaseConfig.isConfigured
             Box(
                 modifier = Modifier
@@ -125,7 +124,7 @@ fun AuthScreen(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = if (isConfigured) "Supabase Cloud Conectado" else "Supabase: Modo Local / Demo Seguro",
+                        text = if (isConfigured) "Cloud Conectado" else "Modo Seguro Oficial",
                         color = if (isConfigured) EmeraldOnContainer else TextMuted,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold
@@ -220,10 +219,13 @@ fun AuthScreen(
                         Column {
                             OutlinedTextField(
                                 value = fullName,
-                                onValueChange = { fullName = it },
+                                onValueChange = {
+                                    fullName = it
+                                    errorMessage = null
+                                },
                                 label = { Text("Nombre Completo", color = TextMuted) },
                                 leadingIcon = {
-                                    Icon(Icons.Default.PersonOutline, contentDescription = null, tint = TextMuted)
+                                    Icon(Icons.Default.Person, contentDescription = null, tint = TextMuted)
                                 },
                                 singleLine = true,
                                 modifier = Modifier
@@ -408,31 +410,6 @@ fun AuthScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Demo User Quick Fill button
-                    OutlinedButton(
-                        onClick = {
-                            email = "demo@korelife.com"
-                            password = "password123"
-                            errorMessage = null
-                            viewModel.signIn(email, password) { success, _ ->
-                                if (success) onAuthSuccess()
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp)
-                            .testTag("auth_demo_fill_button"),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFA5B4FC)),
-                        border = ButtonDefaults.outlinedButtonBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(Color(0xFF6366F1).copy(alpha = 0.5f)))
-                    ) {
-                        Icon(Icons.Default.FlashOn, contentDescription = null, tint = IndigoSecondary, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = "Ingresar con Usuario Demo", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
                     // Google Sign-In Button with Credential Manager
                     val context = androidx.compose.ui.platform.LocalContext.current
                     val coroutineScope = rememberCoroutineScope()
@@ -479,30 +456,12 @@ fun AuthScreen(
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            // Guest Mode / Direct Access
-            TextButton(
-                onClick = {
-                    viewModel.continueAsGuest()
-                    onAuthSuccess()
-                },
-                modifier = Modifier.testTag("auth_guest_button")
-            ) {
-                Text(
-                    text = "Explorar como Invitado sin registrarse →",
-                    color = TextMuted,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
         }
     }
 }
 
 @Composable
-private fun ForgotPasswordDialog(onDismiss: () -> Unit) {
+fun ForgotPasswordDialog(onDismiss: () -> Unit) {
     var resetEmail by remember { mutableStateOf("") }
     var sentMessage by remember { mutableStateOf(false) }
 

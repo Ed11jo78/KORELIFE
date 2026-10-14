@@ -39,12 +39,14 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val themeMode by viewModel.themeMode.collectAsState()
+            val currentUser by viewModel.currentUser.collectAsState()
+            val isDemoMode by viewModel.isDemoMode.collectAsState()
+
             KoreLifeTheme(themeMode = themeMode) {
-                val currentUser by viewModel.currentUser.collectAsState()
-                if (currentUser == null) {
+                if (currentUser == null && !isDemoMode) {
                     AuthScreen(
                         viewModel = viewModel,
-                        onAuthSuccess = { /* Automatically transitions when currentUser updates */ }
+                        onAuthSuccess = {}
                     )
                 } else {
                     KoreLifeMainApp(viewModel = viewModel)
