@@ -1,0 +1,8 @@
+{
+  "name": "KoreLife",
+  "description": "KoreLife - Life OS integral: finanzas multimoneda con tasas en vivo BCV/Binance, presupuestos, metas, tareas, hábitos y comunidad.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
