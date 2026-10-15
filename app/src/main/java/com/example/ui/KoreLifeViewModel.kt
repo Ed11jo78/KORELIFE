@@ -270,4 +270,24 @@ class KoreLifeViewModel : ViewModel() {
     fun toggleAutoUpdateRates() = repository.toggleAutoUpdateRates()
     fun toggleBiometrics() = repository.toggleBiometrics()
     fun setThemeMode(mode: ThemeMode) = repository.setThemeMode(mode)
+
+    // --- Firebase Cloud Messaging (FCM) ---
+    private val _fcmToken = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+    val fcmToken: StateFlow<String?> = _fcmToken.asStateFlow()
+
+    private val _fcmTopics = kotlinx.coroutines.flow.MutableStateFlow(listOf("all_users", "transacciones", "anuncios"))
+    val fcmTopics: StateFlow<List<String>> = _fcmTopics.asStateFlow()
+
+    fun updateFcmToken(token: String) {
+        _fcmToken.value = token
+    }
+
+    fun sendLocalTestPush(context: android.content.Context) {
+        com.example.notification.KoreFirebaseMessagingService.showPushNotification(
+            context = context,
+            title = "🔔 Notificación Push FCM - KoreLife",
+            body = "¡El servicio de Firebase Cloud Messaging está activo y vinculado correctamente!",
+            type = "fcm_test"
+        )
+    }
 }

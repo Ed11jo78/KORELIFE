@@ -29,6 +29,17 @@ object NotificationHelper {
             }
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
+
+            val fcmChannel = NotificationChannel(
+                KoreFirebaseMessagingService.CHANNEL_FCM_ID,
+                KoreFirebaseMessagingService.CHANNEL_FCM_NAME,
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notificaciones push en tiempo real enviadas desde el panel administrativo de KoreLife"
+                enableVibration(true)
+                setShowBadge(true)
+            }
+            notificationManager.createNotificationChannel(fcmChannel)
         }
     }
 

@@ -33,9 +33,28 @@ enum class KoreLifeScreen(val title: String, val selectedIcon: ImageVector, val 
 class MainActivity : ComponentActivity() {
     private val viewModel: KoreLifeViewModel by viewModels()
 
+    private val requestNotificationPermissionLauncher = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        android.util.Log.d("MainActivity", "Notification permission granted: $isGranted")
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Request notification permission for Android 13+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            requestNotificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        // Initialize Firebase Cloud Messaging
+        com.example.notification.KoreFirebaseMessagingService.initializeFcm(this) { token ->
+            viewModel.updateFcmToken(token)
+        }
+        com.example.notification.KoreFirebaseMessagingService.getSavedFcmToken(this)?.let { token ->
+            viewModel.updateFcmToken(token)
+        }
 
         setContent {
             val themeMode by viewModel.themeMode.collectAsState()
