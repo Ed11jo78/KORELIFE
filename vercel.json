@@ -1,0 +1,13 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/admin_panel.html",
+      "destination": "/index.html"
+    }
+  ],
+  "cleanUrls": true
+}
