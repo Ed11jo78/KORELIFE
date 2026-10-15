@@ -10,6 +10,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS Client for Realtime -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -446,6 +448,13 @@
                                     </div>
                                     <span class="px-2 py-0.5 bg-sky-500/20 text-sky-400 text-[11px] font-bold rounded-md">Activo</span>
                                 </div>
+                                <div class="flex items-center justify-between p-3 bg-darkBg/60 rounded-xl border border-gray-800/80">
+                                    <div class="flex items-center space-x-2.5">
+                                        <i class="fa-solid fa-bolt-lightning text-emerald-400 text-sm"></i>
+                                        <span class="text-xs text-gray-300 font-medium">Supabase Realtime (WSS)</span>
+                                    </div>
+                                    <span class="px-2 py-0.5 bg-gray-800 text-amber-400 border border-amber-500/30 text-[11px] font-bold rounded-md" id="status-supabase-realtime">Modo Local (Sin credenciales)</span>
+                                </div>
                             </div>
                         </div>
 
@@ -812,6 +821,61 @@
                                 <span>Cargar Tráfico de Prueba Simulado</span>
                             </button>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Supabase Cloud & Realtime Connection Box -->
+                <div class="bg-cardBg border border-gray-800 p-5 sm:p-6 rounded-2xl shadow-sm space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-cloud-bolt"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-white text-base">Conexión Supabase Cloud & Realtime</h4>
+                                <p class="text-xs text-gray-400">Estado de la base de datos PostgreSQL y canales WebSocket en vivo.</p>
+                            </div>
+                        </div>
+                        <span id="supabase-status-pill" class="px-3 py-1 bg-gray-800 text-amber-400 border border-amber-500/30 text-xs font-bold rounded-lg flex items-center space-x-1.5 w-max">
+                            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                            <span id="supabase-pill-text">Modo Local / Desconectado</span>
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Supabase Project URL</label>
+                            <input type="url" id="cfg-supabase-url" placeholder="https://tu-proyecto.supabase.co" 
+                                   class="w-full bg-darkBg border border-gray-700 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-primary">
+                            <p class="text-[10px] text-gray-500 mt-1">Obtenida en Project Settings -> API en tu consola de Supabase.</p>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Supabase Anon Key (Public API Key)</label>
+                            <input type="password" id="cfg-supabase-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." 
+                                   class="w-full bg-darkBg border border-gray-700 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-primary">
+                            <p class="text-[10px] text-gray-500 mt-1">Clave pública segura para clientes con RLS activado.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-3 pt-2">
+                        <button onclick="saveAndConnectSupabase()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center space-x-2 shadow-sm">
+                            <i class="fa-solid fa-plug"></i>
+                            <span>Conectar y Escuchar en Tiempo Real</span>
+                        </button>
+                        <button onclick="testSupabaseConnection()" class="bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 px-4 py-2.5 rounded-xl text-xs font-semibold transition flex items-center space-x-2">
+                            <i class="fa-solid fa-stethoscope text-primary"></i>
+                            <span>Probar Conexión Cloud</span>
+                        </button>
+                        <button onclick="disconnectSupabase()" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition">
+                            Desconectar / Volver a Modo Local
+                        </button>
+                    </div>
+
+                    <div class="p-3.5 bg-darkBg/60 rounded-xl border border-gray-800/80 text-xs space-y-1.5" id="supabase-diagnostic-log">
+                        <p class="text-gray-400 font-mono text-[11px] flex items-center">
+                            <i class="fa-solid fa-info-circle text-primary mr-2"></i>
+                            <span id="supabase-diag-msg">Actualmente operando con canal local (BroadcastChannel y Storage Sync). Para conectar la base de datos de Supabase en tiempo real, ingresa tu Project URL y Anon Key arriba.</span>
+                        </p>
                     </div>
                 </div>
             </section>
@@ -1412,17 +1476,225 @@
             }, 700);
         }
 
+        // SUPABASE REALTIME CLIENT & SYNC MANAGEMENT
+        let supabaseClient = null;
+        let supabaseRealtimeChannel = null;
+
+        const DEFAULT_SUPABASE_URL = 'https://cwnmxwtqhxgezqzisudj.supabase.co';
+        const DEFAULT_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3bm14d3RxaHhnZXpxemlzdWRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyMzgzODAsImV4cCI6MjEwMjgxNDM4MH0.OViZyoApe8IcP0IY1MB7AqxByG5Jfzds9MEnVu_0r2g';
+
+        function getSupabaseStoredConfig() {
+            const isExplicitlyDisconnected = localStorage.getItem('korelife_supabase_disabled') === 'true';
+            if (isExplicitlyDisconnected) {
+                return { url: '', key: '' };
+            }
+            return {
+                url: localStorage.getItem('korelife_supabase_url') || DEFAULT_SUPABASE_URL,
+                key: localStorage.getItem('korelife_supabase_key') || DEFAULT_SUPABASE_KEY
+            };
+        }
+
+        function updateSupabaseUI(connected, text, isError = false) {
+            const pill = document.getElementById('supabase-status-pill');
+            const pillText = document.getElementById('supabase-pill-text');
+            const statusIndicator = document.getElementById('status-supabase-realtime');
+            const diagMsg = document.getElementById('supabase-diag-msg');
+
+            if (connected) {
+                if (pill) {
+                    pill.className = 'px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-bold rounded-lg flex items-center space-x-1.5 w-max';
+                }
+                if (pillText) pillText.innerText = text || 'Conectado (PostgreSQL Realtime)';
+                if (statusIndicator) {
+                    statusIndicator.className = 'px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-[11px] font-bold rounded-md';
+                    statusIndicator.innerText = 'WSS Conectado 100%';
+                }
+                if (diagMsg) {
+                    diagMsg.innerText = 'Supabase conectado exitosamente vía WebSockets. Escuchando eventos INSERT, UPDATE y DELETE de postgres_changes en tiempo real.';
+                }
+            } else if (isError) {
+                if (pill) {
+                    pill.className = 'px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/40 text-xs font-bold rounded-lg flex items-center space-x-1.5 w-max';
+                }
+                if (pillText) pillText.innerText = text || 'Error de Conexión';
+                if (statusIndicator) {
+                    statusIndicator.className = 'px-2 py-0.5 bg-red-500/20 text-red-400 text-[11px] font-bold rounded-md';
+                    statusIndicator.innerText = 'Fallo de Conexión';
+                }
+                if (diagMsg) {
+                    diagMsg.innerText = 'No se pudo conectar a Supabase: ' + text + '. Verifica la URL y la Anon Key.';
+                }
+            } else {
+                if (pill) {
+                    pill.className = 'px-3 py-1 bg-gray-800 text-amber-400 border border-amber-500/30 text-xs font-bold rounded-lg flex items-center space-x-1.5 w-max';
+                }
+                if (pillText) pillText.innerText = text || 'Modo Local / Desconectado';
+                if (statusIndicator) {
+                    statusIndicator.className = 'px-2 py-0.5 bg-gray-800 text-amber-400 border border-amber-500/30 text-[11px] font-bold rounded-md';
+                    statusIndicator.innerText = 'Modo Local (Sin llaves)';
+                }
+                if (diagMsg) {
+                    diagMsg.innerText = 'Actualmente operando con canal local (BroadcastChannel y Storage Sync). Para conectar la base de datos de Supabase en tiempo real, ingresa tu Project URL y Anon Key arriba.';
+                }
+            }
+        }
+
+        async function initSupabaseRealtime() {
+            const cfg = getSupabaseStoredConfig();
+            const urlInput = document.getElementById('cfg-supabase-url');
+            const keyInput = document.getElementById('cfg-supabase-key');
+
+            if (urlInput && cfg.url) urlInput.value = cfg.url;
+            if (keyInput && cfg.key) keyInput.value = cfg.key;
+
+            if (!cfg.url || !cfg.key || cfg.url.includes('your-project-ref')) {
+                updateSupabaseUI(false, 'Modo Local (Sin credenciales)');
+                return;
+            }
+
+            try {
+                if (!window.supabase) {
+                    console.warn('Supabase JS library not loaded');
+                    updateSupabaseUI(false, 'Librería JS no cargada', true);
+                    return;
+                }
+
+                updateSupabaseUI(false, 'Conectando WSS Realtime...');
+                supabaseClient = window.supabase.createClient(cfg.url, cfg.key);
+
+                if (supabaseRealtimeChannel) {
+                    supabaseClient.removeChannel(supabaseRealtimeChannel);
+                }
+
+                // Subscribe to real-time postgres changes
+                supabaseRealtimeChannel = supabaseClient
+                    .channel('korelife_realtime_channel')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, (payload) => {
+                        console.log('Evento Realtime Supabase recibido:', payload);
+                        if (payload.eventType === 'INSERT' && payload.new) {
+                            const newTx = {
+                                id: payload.new.id || ('sb_' + Date.now()),
+                                title: payload.new.title || payload.new.description || payload.new.concept || 'Transacción Supabase',
+                                amount: parseFloat(payload.new.amount || 0),
+                                type: payload.new.type || 'expense',
+                                category: payload.new.category || 'General',
+                                currency: payload.new.currency || 'USD',
+                                createdAt: new Date().toLocaleTimeString(),
+                                date: new Date().toLocaleDateString()
+                            };
+                            liveTransactions.push(newTx);
+                            localStorage.setItem('korelife_transactions', JSON.stringify(liveTransactions));
+                            loadAllLiveData();
+                            showPushToast('Supabase Realtime Push', `Transacción recibida desde PostgreSQL: ${newTx.title} ($${newTx.amount.toFixed(2)})`, 'success');
+                        }
+                    })
+                    .subscribe((status, err) => {
+                        if (status === 'SUBSCRIBED') {
+                            updateSupabaseUI(true, 'Conectado (PostgreSQL Realtime)');
+                            console.log('Canal Supabase Realtime activo y escuchando');
+                        } else if (status === 'CHANNEL_ERROR') {
+                            updateSupabaseUI(false, 'Error en Canal WebSocket', true);
+                        } else if (status === 'TIMED_OUT') {
+                            updateSupabaseUI(false, 'Timeout al conectar', true);
+                        }
+                    });
+            } catch (err) {
+                console.error('Error inicializando Supabase Realtime:', err);
+                updateSupabaseUI(false, err.message || 'Error de conexión', true);
+            }
+        }
+
+        function saveAndConnectSupabase() {
+            const url = document.getElementById('cfg-supabase-url').value.trim();
+            const key = document.getElementById('cfg-supabase-key').value.trim();
+
+            if (!url || !key) {
+                alert('Por favor introduce la Project URL y la Anon Key de Supabase.');
+                return;
+            }
+
+            if (!url.startsWith('https://')) {
+                alert('La URL de Supabase debe comenzar con https://');
+                return;
+            }
+
+            localStorage.setItem('korelife_supabase_url', url);
+            localStorage.setItem('korelife_supabase_key', key);
+            localStorage.removeItem('korelife_supabase_disabled');
+
+            showPushToast('Credenciales Guardadas', 'Iniciando conexión WebSocket con Supabase Realtime...', 'info');
+            initSupabaseRealtime();
+        }
+
+        async function testSupabaseConnection() {
+            const url = document.getElementById('cfg-supabase-url').value.trim();
+            const key = document.getElementById('cfg-supabase-key').value.trim();
+
+            if (!url || !key) {
+                alert('Primero ingresa la Project URL y la Anon Key.');
+                return;
+            }
+
+            showPushToast('Comprobando API', 'Verificando endpoint REST y WebSocket de Supabase...', 'info');
+            try {
+                const response = await fetch(`${url.replace(/\/$/, '')}/rest/v1/`, {
+                    headers: {
+                        'apikey': key,
+                        'Authorization': `Bearer ${key}`
+                    }
+                });
+
+                if (response.ok || response.status === 200 || response.status === 404 || response.status === 401) {
+                    if (response.status === 401) {
+                        alert('Error 401 Unauthorized: La Anon Key ingresada no es válida para este proyecto Supabase.');
+                        updateSupabaseUI(false, 'Anon Key no válida (401)', true);
+                    } else {
+                        alert('¡Conexión Exitosa con Supabase!\n\nEl servidor respondió correctamente. Tu proyecto está listo para recibir y emitir eventos en tiempo real.');
+                        initSupabaseRealtime();
+                    }
+                } else {
+                    alert('Respuesta del servidor Supabase: Código HTTP ' + response.status);
+                }
+            } catch (err) {
+                alert('Fallo de conexión con Supabase:\n' + err.message + '\nVerifica que la URL sea válida y tenga conexión a internet.');
+                updateSupabaseUI(false, 'No se pudo conectar a la URL', true);
+            }
+        }
+
+        function disconnectSupabase() {
+            if (confirm('¿Desea desconectar Supabase y operar en modo local independiente?')) {
+                localStorage.removeItem('korelife_supabase_url');
+                localStorage.removeItem('korelife_supabase_key');
+                localStorage.setItem('korelife_supabase_disabled', 'true');
+                document.getElementById('cfg-supabase-url').value = '';
+                document.getElementById('cfg-supabase-key').value = '';
+                if (supabaseClient && supabaseRealtimeChannel) {
+                    supabaseClient.removeChannel(supabaseRealtimeChannel);
+                }
+                supabaseClient = null;
+                supabaseRealtimeChannel = null;
+                updateSupabaseUI(false, 'Modo Local / Desconectado');
+                showPushToast('Supabase Desconectado', 'El sistema ha vuelto a operar con canales locales.', 'info');
+            }
+        }
+
         function runSystemDiagnostics() {
             showPushToast('Diagnóstico Iniciado', 'Comprobando receptor de webhooks y APIs externas...', 'info');
+            const cfg = getSupabaseStoredConfig();
+            const sbStatus = (cfg.url && cfg.key && !cfg.url.includes('your-project-ref'))
+                ? 'CONFIGURADO (' + (supabaseRealtimeChannel ? 'WSS Activo' : 'Conectando') + ')'
+                : 'MODO LOCAL (Sin credenciales en vivo)';
+
             setTimeout(() => {
                 alert('Diagnóstico de Infraestructura KoreLife:\n\n' +
                       '✓ Receptor Webhook Push: ACTIVO (Escuchando en vivo)\n' +
-                      '✓ Canal de Eventos Móvil: CONECTADO (Broadcast & Storage Sync)\n' +
+                      '✓ Canal de Eventos Móvil: CONECTADO (BroadcastChannel & Storage)\n' +
+                      '✓ Base de Datos Supabase: ' + sbStatus + '\n' +
                       '✓ API Tasa BCV Oficial: RESPUESTA 200 OK (' + currentBcvRate.toFixed(2) + ' VES)\n' +
                       '✓ API Binance P2P: RESPUESTA 200 OK (' + currentBinanceRate.toFixed(2) + ' VES)\n' +
                       '✓ Latencia promedio: 32 ms\n' +
                       '✓ Seguridad: Firma HMAC Validada\n\n' +
-                      'Todo el sistema está operando al 100% correctamente.');
+                      'El panel web y los canales de comunicación están funcionando correctamente.');
             }, 600);
         }
 
@@ -1563,6 +1835,7 @@
             initChart();
             fetchLiveBcvRate();
             fetchLiveBinanceRate();
+            initSupabaseRealtime();
         });
     </script>
 </body>

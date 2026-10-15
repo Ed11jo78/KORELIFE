@@ -6,11 +6,11 @@ package com.example.data.supabase
  */
 object SupabaseConfig {
 
-    // Default placeholders matching .env.example
-    var supabaseUrl: String = "https://your-project-ref.supabase.co"
+    // Default project credentials configured from your Supabase project (ref: cwnmxwtqhxgezqzisudj)
+    var supabaseUrl: String = "https://cwnmxwtqhxgezqzisudj.supabase.co"
         private set
 
-    var supabaseAnonKey: String = "your-anon-key"
+    var supabaseAnonKey: String = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3bm14d3RxaHhnZXpxemlzdWRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyMzgzODAsImV4cCI6MjEwMjgxNDM4MH0.OViZyoApe8IcP0IY1MB7AqxByG5Jfzds9MEnVu_0r2g"
         private set
 
     init {
